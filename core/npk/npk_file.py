@@ -17,6 +17,24 @@ from .detection import get_ext, get_file_category, is_binary
 from .keys import KeyGenerator
 from .class_types import NPKEntryDataFlags, NPKIndex, NPKEntry, CompressionType, DecryptionType, NPKReadOptions
 
+
+def safe_decode(byte_data: bytes) -> str:
+    """安全解码字节数据为字符串，保持向后兼容性。"""
+    if not byte_data:
+        return ""
+    
+    # 首先尝试UTF-8
+    try:
+        return byte_data.decode('utf-8')
+    except UnicodeDecodeError:
+        # UTF-8失败时，尝试常见的中文编码
+        try:
+            return byte_data.decode('gbk')
+        except UnicodeDecodeError:
+            # 最后使用Latin-1（不会失败）
+            return byte_data.decode('latin-1')
+
+
 class NPKFile:
     """Main class for handling NPK files."""
 
@@ -174,9 +192,13 @@ class NPKFile:
 
                 get_logger().debug("Index %d: %s", i, index)
 
-                # Generate a filename
-                index.filename = f"{index.file_structure.decode("utf-8")
-                                    if index.file_structure else hex(index.file_signature)}"
+                # 修复：使用安全的解码方法替换原来的UTF-8解码
+                if index.file_structure:
+                    filename_str = safe_decode(index.file_structure)
+                else:
+                    filename_str = hex(index.file_signature)
+
+                index.filename = filename_str
 
                 self.indices.append(index)
 
