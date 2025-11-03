@@ -19,19 +19,15 @@ from .class_types import NPKEntryDataFlags, NPKIndex, NPKEntry, CompressionType,
 
 
 def safe_decode(byte_data: bytes) -> str:
-    """安全解码字节数据为字符串，保持向后兼容性。"""
     if not byte_data:
         return ""
     
-    # 首先尝试UTF-8
     try:
         return byte_data.decode('utf-8')
     except UnicodeDecodeError:
-        # UTF-8失败时，尝试常见的中文编码
         try:
             return byte_data.decode('gbk')
         except UnicodeDecodeError:
-            # 最后使用Latin-1（不会失败）
             return byte_data.decode('latin-1')
 
 
